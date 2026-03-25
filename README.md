@@ -1,105 +1,37 @@
-**Multi-View Project Tracker UI**
+**Multi-View Project Tracker**
+A client-side project management dashboard built with React, TypeScript, and Vite. Handles 500+ tasks across three distinct views — Kanban, List, and Timeline — with custom drag-and-drop, virtual scrolling, live filtering, and a collaboration simulation layer.
 
-This is a frontend project management dashboard built using React, TypeScript, and Vite. The app supports three different views—Kanban, List, and Timeline—to work with the same set of 500+ tasks. It includes features like custom drag-and-drop (built from scratch), virtual scrolling, filtering, and simulated collaboration indicators.
+**Setup**
+**1. Install dependencies**
+bashnpm install
+**2. Start the dev server**
+bashnpm run dev
+**3. Type-check / build check**
+bashnpm run build
 
-Setup Instructions
-Install dependencies:
-npm install
-Start the development server:Multi-View Project Tracker UI
+**Why Zustand Over Context API**
+Managing 500+ tasks efficiently ruled out a naive Context API + useReducer approach early on. Zustand was the right call for a few specific reasons:
 
-This is a frontend project management dashboard built using React, TypeScript, and Vite.
-It supports three views—Kanban, List, and Timeline—working on the same dataset of 500+ tasks.
+No provider nesting — the store lives outside the React tree entirely, so there's no wrapping hell to maintain
+Granular selectors — components subscribe to exactly the slice they need (e.g. useTaskStore(s => s.tasks)), which cuts down unnecessary re-renders dramatically — especially important when 500+ rows are updating or cards are being dragged
+Less boilerplate — no actions, dispatchers, or reducers to wire up; the store stays lean and predictable
 
-**The application includes:**
 
-Custom drag-and-drop (built from scratch)
-Virtual scrolling for large datasets
-Filtering system
-Simulated collaboration indicators
-1. Setup Instructions
+**Virtual Scrolling (List View)**
+Rendering 500+ DOM nodes at once would cause serious performance issues — layout thrashing, sluggish scrolling, the works. The fix was a custom <VirtualScroller> built directly inside ListView.tsx.
+**How it works:**
 
-To run the project locally:
+Tracks scrollTop and maps it against a fixed ROW_HEIGHT of 52px to figure out which rows are currently in view
+Only renders that visible slice, plus an overscan buffer of ±8 rows on either side
+A wrapper div with a calculated totalHeight holds the full scroll height, so the native scrollbar behaves exactly as expected without rendering every row
 
-npm install
-npm run dev
-npm run build
 
-**2. State Management Decision**
+**Drag-and-Drop**
+Rather than pulling in react-beautiful-dnd or dnd-kit, a lightweight custom hook (useDragAndDrop) handles everything using the native Pointer Events API (pointerdown, pointermove, pointerup). This makes it work on both mouse and touch devices without any extra configuration.
+**Key details:**
 
-To manage a large dataset efficiently, I used Zustand instead of Context API with useReducer.
+Drop zones are detected dynamically via document.elementFromPoint reading data-column attributes — no hardcoded coordinates
+A floating ghost clone follows the pointer while dragging, giving instant visual feedback with zero React re-renders mid-drag
+The original card stays in the DOM at opacity: 0 during a drag, so its layout footprint is preserved and sibling cards don't jump around
+The target column inserts a matching-height placeholder when a card hovers over it, making the drop feel smooth and predictable
 
-The main reason was simplicity and performance. Zustand avoids the need for wrapping components with providers, which keeps the structure clean. It also allows selecting only the required slice of state, reducing unnecessary re-renders.
-
-This was especially helpful during drag-and-drop operations and when handling large lists. Compared to useReducer, it requires less boilerplate and is easier to scale for this type of UI-heavy application.
-
-**3. Virtual Scrolling Implementation**
-
-Rendering all 500+ tasks at once would impact performance, so I implemented custom virtual scrolling.
-
-The application calculates which rows are visible based on the scroll position and renders only those rows, along with a small buffer above and below.
-
-To maintain correct scrollbar behavior, a container with the total calculated height of all tasks is used. The visible rows are then positioned within that space.
-
-This approach ensures smooth scrolling and avoids performance issues caused by rendering too many DOM elements.
-
-**4. Drag-and-Drop Approach**
-
-The drag-and-drop system was implemented from scratch using pointer events, without any external libraries.
-
-When dragging starts:
-
-A floating "ghost" element follows the cursor
-The original card remains in place but is hidden using CSS to prevent layout shift
-
-Drop zones are detected dynamically using document.elementFromPoint along with custom data-column attributes.
-
-This approach avoids unnecessary React re-renders during dragging and ensures smooth interaction on both mouse and touch devices.
-
-**5. Explanation**
-
-Hardest problem:
-The most challenging part was implementing virtual scrolling accurately. Calculating visible rows while maintaining smooth scrolling required careful tuning. Small mistakes in buffer size or height calculations initially caused flickering and incorrect rendering.
-
-Handling drag placeholder without layout shift:
-Instead of removing the dragged element, I kept it in place and applied opacity: 0. This preserved the layout structure and prevented sudden shifts. A floating clone handles the visual movement, while placeholders indicate the drop position.
-npm run dev
-Build the project:
-npm run build
-State Management Decision
-
-For managing a fairly large dataset (500+ tasks), I chose Zustand instead of Context API with useReducer.
-
-The main reason is simplicity and performance. Zustand doesn’t require wrapping the app with providers, which keeps the component tree clean. Also, it allows selecting only the specific part of the state a component needs. This helped reduce unnecessary re-renders, especially during drag-and-drop operations and when handling large lists.
-
-Compared to useReducer, Zustand has much less boilerplate and is easier to scale for this kind of UI-heavy application.
-
-Virtual Scrolling Implementation
-
-Rendering all 500+ tasks at once in the List View would hurt performance, so I implemented a custom virtual scrolling solution.
-
-Instead of rendering everything, the app calculates which rows are visible based on the scroll position. Only those rows (plus a small buffer of extra rows above and below) are rendered.
-
-To keep the scrollbar behaving naturally, I used a container with a calculated total height based on all tasks. The visible rows are then positioned correctly inside that space.
-
-This approach keeps scrolling smooth and avoids performance issues caused by too many DOM elements.
-
-Drag-and-Drop Approach
-
-The drag-and-drop system was built from scratch using pointer events, without any external libraries.
-
-When a user starts dragging:
-
-A floating “ghost” element follows the cursor
-The original card stays in place but becomes invisible to avoid layout shift
-
-To detect where the card is dropped, I used document.elementFromPoint and custom attributes (data-column) to identify valid drop zones.
-
-This approach avoids unnecessary React re-renders during dragging and keeps interactions smooth on both mouse and touch devices.
-
-Explanation
-
-Hardest problem:
-The most challenging part was implementing virtual scrolling properly. Getting the calculations right for which items to render—while keeping scrolling smooth and accurate—took some trial and error. Small mistakes in buffer size or height calculations caused flickering or incorrect positioning, so I had to fine-tune those values.
-
-Handling drag placeholder without layout shift:
-Instead of removing the dragged element from the layout, I kept it in place and just made it invisible using CSS. This way, the layout doesn’t collapse or shift suddenly. The actual movement is handled by a floating clone that follows the cursor. When dragging across columns, placeholders are inserted to show where the item will land.
