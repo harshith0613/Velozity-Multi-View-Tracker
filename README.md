@@ -5,13 +5,16 @@ A client-side project management dashboard built with React, TypeScript, and Vit
 **Setup**
 
 **1. Install dependencies**
-bashnpm install
+
+npm install
 
 **2. Start the dev server**
-bashnpm run dev
+
+npm run dev
 
 **3. Type-check / build check**
-bashnpm run build
+
+npm run build
 
 **Why Zustand Over Context API**
 
